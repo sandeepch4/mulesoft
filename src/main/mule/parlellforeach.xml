@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="parlellforeachFlow" doc:id="9d7e508f-7151-4ed3-9468-e61c0e3bd8bc" >
+		<http:listener doc:name="Listener" doc:id="df001e4d-1711-456b-9096-7b321523e334" config-ref="HTTP_Listener_config" path="${http.path}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="22ff589c-fe4f-41aa-9a20-82c24f6ba995" message='"message received"--&gt;#[payload]'/>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="ef725542-b717-409d-a715-e243d1e72d0c" variableName="inputpayload"/>
+		<ee:transform doc:name="Transform Message" doc:id="cfc69e58-5495-4e37-84d7-ea0af2cec5c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputpayload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="34396b84-dec5-4459-a7a7-b491b4bbfe8d" name="parlellforeachSub_Flow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="aa751649-8a48-4945-a381-89e928c9b768" name="parlellforeachSub_Flow2"/>
+	</flow>
+	<sub-flow name="parlellforeachSub_Flow2" doc:id="f299740a-9c2b-43a4-a45f-08f8d8d2b8e8" >
+		<ee:transform doc:name="Transform Message" doc:id="f62c0d20-9e50-44b2-b295-3f62373f136d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputpayload.Employees map $.region
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="7d3fdf57-b187-481b-a399-ac1dec995d59" message='"after"--&gt;#[payload]' />
+	</sub-flow>
+	<sub-flow name="parlellforeachSub_Flow" doc:id="039df1df-01f1-45d2-9aa2-f5a8595ea681" >
+		<choice doc:name="Choice" doc:id="ae53e75a-9047-4b73-a160-8fd9d99fe20e" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<flow-ref doc:name="Flow Reference" doc:id="33170c15-a71a-48b4-ad6d-a3a1d21401c0" name="parlellforeachSub_Flow1"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1c59eed4-031b-4fa1-8a5d-b80d07e59313" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="parlellforeachSub_Flow1" doc:id="19173443-15b9-4ef1-a262-2bae3a836f7f" >
+		<logger level="INFO" doc:name="Logger" doc:id="c51e79b4-62d2-45ad-948c-048f352e6400" message='"message "--&gt;#[payload]'/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="9c093428-e7fa-4d60-aff3-98e93af0cc87" collection="#[payload.Employees]">
+			<ee:transform doc:name="Transform Message" doc:id="79d3569c-d744-4553-bfca-ed6cdc6260ec">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="c99210cd-8372-402f-b994-50d86b3c76fc" message='"after parlell foreach"--&gt;#[payload]'/>
+		</parallel-foreach>
+	</sub-flow>
+</mule>
